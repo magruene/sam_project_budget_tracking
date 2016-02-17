@@ -151,7 +151,6 @@
     function getLoggedWorkForSubtasks(story, epicKey, team) {
         AJS.$.getJSON("http://jira.swisscom.com/rest/api/2/search?fields=key&jql=parent in (" + story.key + ")")
             .success(function (subtasks) {
-                queue--;
                 if (subtasks.issues.length > 0) {
                     AJS.$.each(subtasks.issues, function (index, subtask) {
                         getWorklogForIssue(subtask.key, epicKey, team);
@@ -167,7 +166,6 @@
     function getWorklogForIssue(key, epicKey, team) {
         AJS.$.getJSON("http://jira.swisscom.com/rest/api/2/issue/" + key + "/worklog")
             .success(function (worklogs) {
-                queue--;
                 var from = AJS.$("#from").val();
                 var fromTimeStamp = new Date(from).getTime();
                 var to = AJS.$("#to").val();
