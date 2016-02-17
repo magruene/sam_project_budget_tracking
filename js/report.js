@@ -54,8 +54,8 @@
 
     function search() {
         loggedWorkPerTeamAndEpic = {
-            withBudget: {"Skipper": {}, "Yankee": {}, "Catta": {}},
-            withoutBudget: {"Skipper": {}, "Yankee": {}, "Catta": {}}
+            "withBudget": {"Skipper": {}, "Yankee": {}, "Catta": {}},
+            "withoutBudget": {"Skipper": {}, "Yankee": {}, "Catta": {}}
         };
         var team = AJS.$("#team").val();
         var fixVersion = AJS.$("#versionChooserMain").val();
@@ -69,10 +69,10 @@
             if (0 === AJS.$.active) {
                 var teams = ["Skipper", "Yankee", "Catta"];
                 AJS.$.each(teams, function (team) {
-                    AJS.$.each(loggedWorkPerTeamAndEpic.withBudget[team], function (epicKey, calculationResult) {
+                    AJS.$.each(loggedWorkPerTeamAndEpic["withBudget"][team], function (epicKey, calculationResult) {
                         pasteEpicToUi(calculationResult, lastFixVersion, nextFixVersion, team, epicKey);
                     });
-                    AJS.$.each(loggedWorkPerTeamAndEpic.withoutBudget[team], function (epicKey, calculationResult) {
+                    AJS.$.each(loggedWorkPerTeamAndEpic["withoutBudget"][team], function (epicKey, calculationResult) {
                         pasteEpicToUi(calculationResult, lastFixVersion, nextFixVersion, team, epicKey);
                     });
                 });
