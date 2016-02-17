@@ -6,7 +6,6 @@
     }
     var loggedWorkPerTeamAndEpic;
 
-
     function init() {
         AJS.$.ajax({
             url: "http://jira.swisscom.com/rest/api/2/project/SAM/versions",
@@ -17,6 +16,7 @@
                     if (!version.released) {
                         AJS.$("#versionChooserMain").append("<option value='" + version.name + "'>" + version.name + "</option>");
                         AJS.$("#versionChooserLast").append("<option value='" + version.name + "'>" + version.name + "</option>");
+                        AJS.$("#versionChooserNext").append("<option value='" + version.name + "'>" + version.name + "</option>");
                     }
                 });
                 AJS.$("button").click(search);
@@ -24,54 +24,66 @@
         });
     }
 
-    function shouldRemoveRow(fields, lastFixVersion, calculationResult) {
-        return fields !== undefined && fields.fixVersions !== undefined && fields.fixVersions.length > 0 && fields.fixVersions[0].name === lastFixVersion && calculationResult.loggedWork === 0;
+    function shouldRemoveRow(fields, lastFixVersion, nextFixVersion, calculationResult) {
+        return fields !== undefined && fields.fixVersions !== undefined && fields.fixVersions.length > 0 && fields.fixVersions[0].name === lastFixVersion && fields.fixVersions[0].name === nextFixVersion && calculationResult.loggedWork === 0;
+    }
+
+    function pasteEpicToUi(calculationResult, lastFixVersion, nextFixVersion, team, epicKey) {
+        var currentEpic = calculationResult.epic;
+        if (currentEpic !== undefined) {
+            if (shouldRemoveRow(currentEpic.fields, lastFixVersion, nextFixVersion, calculationResult)) {
+                AJS.$("#results_" + team + " #row_" + epicKey).remove();
+            } else {
+                AJS.$("#results_" + team + " #spinner_" + epicKey).hide();
+                AJS.$("#results_" + team + " #total_" + epicKey).append("<div class='resultH'>" + calculationResult.totalEstimate + "</div>");
+                AJS.$("#results_" + team + " #remaining_" + epicKey).append("<div class='resultH'>" + calculationResult.remainingEstimate + "</div>");
+                if (calculationResult.loggedWork > 0) {
+                    AJS.$("#results_" + team + " #logged_" + epicKey).append("<div class='resultH'>" + calculationResult.loggedWork + "</div>");
+                } else {
+                    AJS.$("#results_" + team + " #logged_" + epicKey).append("<div class='resultH'>0</div>");
+                }
+            }
+        } else {
+            AJS.$("#results_" + team + "#row_" + epicKey).remove();
+        }
     }
 
     function search() {
-        loggedWorkPerTeamAndEpic = {"Skipper": {}, "Yankee": {}, "Catta": {}};
+        loggedWorkPerTeamAndEpic = {
+            withBudget: {"Skipper": {}, "Yankee": {}, "Catta": {}},
+            withoutBudget: {"Skipper": {}, "Yankee": {}, "Catta": {}}
+        };
         var team = AJS.$("#team").val();
         var fixVersion = AJS.$("#versionChooserMain").val();
         var lastFixVersion = AJS.$("#versionChooserLast").val();
-        var summaryQuery = "(summary ~ 'WP-*' or summary ~ 'CR-*' or summary ~ 'SO-*' or summary ~ 'OXO-*')";
+        var nextFixVersion = AJS.$("#versionChooserNext").val();
         var teamQuery = "team in ('Skipper', 'Yankee', 'Catta', 'Private', 'Rico', 'Kowalski')";
-        var fixVersionQuery = "(fixVersion='" + fixVersion + "' or fixVersion='" + lastFixVersion + "')";
-        var allBudgetabbleTOIssues = getBudgetabbleTOIssuesQuery(summaryQuery, teamQuery, fixVersionQuery);
-        var allBudgetabbleEpics = getBudgetabbleEpicsQuery(summaryQuery, fixVersionQuery);
-        var allBudgetabbleSubtasks = getBudgetabbleSubtasksQuery(allBudgetabbleTOIssues);
+        var fixVersionQuery = "(fixVersion in('" + fixVersion + "', '" + lastFixVersion + "', '" + nextFixVersion + "'))";
+        var allBudgetabbleTOIssues = getBudgetabbleTOIssuesQuery(teamQuery, fixVersionQuery);
 
         AJS.$(document).ajaxStop(function () {
             if (0 === AJS.$.active) {
-                AJS.$.each(loggedWorkPerTeamAndEpic, function (team, epics) {
-                    AJS.$.each(epics, function (epicKey, calculationResult) {
-                        var currentEpic = calculationResult.epic;
-                        if (currentEpic !== undefined) {
-                            if (shouldRemoveRow(currentEpic.fields, lastFixVersion, calculationResult)) {
-                                AJS.$("#results_" + team + " #row_" + epicKey).remove();
-                            } else {
-                                AJS.$("#results_" + team + " #spinner_" + epicKey).hide();
-                                AJS.$("#results_" + team + " #total_" + epicKey).append("<div class='resultH'>" + calculationResult.totalEstimate + "</div>");
-                                AJS.$("#results_" + team + " #remaining_" + epicKey).append("<div class='resultH'>" + calculationResult.remainingEstimate + "</div>");
-                                if (calculationResult.loggedWork > 0) {
-                                    AJS.$("#results_" + team + " #logged_" + epicKey).append("<div class='resultH'>" + calculationResult.loggedWork + "</div>");
-                                } else {
-                                    AJS.$("#results_" + team + " #logged_" + epicKey).append("<div class='resultH'>0</div>");
-                                }
-                            }
-                        } else {
-                            AJS.$("#results_" + team + "#row_" + epicKey).remove();
-                        }
+                var teams = ["Skipper", "Yankee", "Catta"];
+                AJS.$.each(teams, function (team) {
+                    AJS.$.each(loggedWorkPerTeamAndEpic.withBudget[team], function (epicKey, calculationResult) {
+                        pasteEpicToUi(calculationResult, lastFixVersion, nextFixVersion, team, epicKey);
+                    });
+                    AJS.$.each(loggedWorkPerTeamAndEpic.withoutBudget[team], function (epicKey, calculationResult) {
+                        pasteEpicToUi(calculationResult, lastFixVersion, nextFixVersion, team, epicKey);
                     });
                 });
                 gadget.resize();
             }
         });
 
+        function isEpicWithBudget(epicLink) {
+            return epicLink.indexOf("WP-") !== -1 || epicLink.indexOf("SO-") !== -1 || epicLink.indexOf("CR-") !== -1 || epicLink.indexOf("OXO-") !== -1;
+        }
+
         AJS.$.ajax({
             url: "http://jira.swisscom.com/rest/api/2/search?maxResults=2000&fields=summary,customfield_14850,customfield_12150,aggregatetimeoriginalestimate,status&jql=" + allBudgetabbleTOIssues,
             dataType: "json",
             success: function (issues) {
-
                 var actualIssues = issues.issues;
                 if (actualIssues.length > 0) {
                     var groupedIssuesByTeam = _.groupBy(actualIssues, function (issue) {
@@ -80,44 +92,27 @@
                     AJS.$.each(_.keys(groupedIssuesByTeam), function (index, currentTeam) {
                         var issueGroup = groupedIssuesByTeam[currentTeam];
                         AJS.$.each(issueGroup, function (index, issue) {
-                            var epicLink = issue.fields.customfield_12150;
-                            if (epicLink === null) {
+                            var epicKey = issue.fields.customfield_12150;
+                            if (epicKey === null) {
                                 console.log("Issue ", issue, " has no epic link")
                             }
-                            if (loggedWorkPerTeamAndEpic[currentTeam][epicLink] === undefined) {
-                                loggedWorkPerTeamAndEpic[currentTeam][epicLink] = {
+
+                            var store = getStore(epicKey);
+                            if (store[currentTeam][epicKey] === undefined) {
+                                store[currentTeam][epicKey] = {
                                     "loggedWork": 0,
                                     "totalEstimate": 0,
                                     "remainingEstimate": 0
                                 };
-                                prepareEpic(epicLink, currentTeam).then(function (epic) {
-                                    loggedWorkPerTeamAndEpic[currentTeam][epicLink].epic = epic;
+                                prepareEpic(epicKey, currentTeam).then(function (epic) {
+                                    store[currentTeam][epicKey].epic = epic;
                                     getWorklogForIssue(epic.key, epic.key, currentTeam);
                                 });
                             }
                             calculateLoggedWorkSumOnStory(issue);
+
                         });
                     });
-                    //console.log(loggedWorkPerTeamAndEpic);
-                    //if (finalSum > 0) {
-                    //    loggedWorkPerTeamAndEpic[currentTeam][epicLink] += (finalSum / 3600);
-                    //    AJS.$("#spinner_" + epic.id).hide();
-                    //    AJS.$("#result_" + epic.id).append("<div class='resultH'>" + loggedWorkPerTeamAndEpic[currentTeam][epicLink] + "</div>");
-                    //} else {
-                    //    AJS.$("#row_" + epic.id).remove();
-                    //}
-                    //console.log("Found: " + actualIssues.length + " epic(s). I will search for work logged on the epic directly.");
-                    //AJS.$.each(actualIssues, function (index, epic) {
-                    //    AJS.$("#results tbody").append('<tr id="row_' + epic.id + '"><td>' + epic.fields.summary + '</td><td id="result_' + epic.id + '"><div id="spinner_' + epic.id + '" class="spinner"><div class="rect1"></div><div class="rect2"></div><div class="rect3"></div><div class="rect4"></div><div class="rect5"></div></div></td></tr>');
-                    //    getLoggedWorkForEpic(epic).then(function (finalSum) {
-                    //        if (finalSum > 0) {
-                    //            AJS.$("#spinner_" + epic.id).hide();
-                    //            AJS.$("#result_" + epic.id).append("<div class='resultH'>" + finalSum / 3600 + "</div>");
-                    //        } else {
-                    //            AJS.$("#row_" + epic.id).remove();
-                    //        }
-                    //    });
-                    //});
                 }
             }
         });
@@ -139,12 +134,13 @@
     function calculateLoggedWorkSumOnStory(story) {
         var epicKey = story.fields.customfield_12150;
         var team = story.fields.customfield_14850.value;
+        var store = getStore(epicKey);
         getWorklogForIssue(story.key, epicKey, team);
         getLoggedWorkForSubtasks(story, epicKey, team);
         var issueEstimation = story.fields.aggregatetimeoriginalestimate / 3600;
-        loggedWorkPerTeamAndEpic[team][epicKey].totalEstimate += issueEstimation;
+        store[team][epicKey].totalEstimate += issueEstimation;
         if (story.fields.status.name !== "R4Review" && story.fields.status.name !== "Closed") {
-            loggedWorkPerTeamAndEpic[team][epicKey].remainingEstimate += issueEstimation;
+            store[team][epicKey].remainingEstimate += issueEstimation;
         }
     }
 
@@ -161,6 +157,16 @@
                 console.log("could not complete worklog request for: " + story.key + ". Will try again");
                 getLoggedWorkForSubtasks(story, epicKey, team); // retry
             });
+    }
+
+    function getStore(epicKey) {
+        var store;
+        if (isEpicWithBudget(epicKey)) {
+            store = loggedWorkPerTeamAndEpic.withBudget;
+        } else {
+            store = loggedWorkPerTeamAndEpic.withoutBudget;
+        }
+        return store;
     }
 
     function getWorklogForIssue(key, epicKey, team) {
@@ -181,7 +187,7 @@
                     });
                 }
                 if (sumLoggedWork > 0) {
-                    loggedWorkPerTeamAndEpic[team][epicKey].loggedWork += (sumLoggedWork / 3600);
+                    getStore(epicKey)[team][epicKey].loggedWork += (sumLoggedWork / 3600);
                 }
             })
             .error(function () {
@@ -190,19 +196,10 @@
             });
     }
 
-    function getBudgetabbleTOIssuesQuery(summaryQuery, teamQuery, fixVersionQuery) {
+    function getBudgetabbleTOIssuesQuery(teamQuery, fixVersionQuery) {
         //return 'issuekey=SAM-2408';
-        return 'issuefunction in linkedIssuesOf("project = sam AND issuetype = Epic AND ' + summaryQuery + ' AND ' + teamQuery + ' AND ' + fixVersionQuery + '") AND team in (Skipper, Yankee, Catta) and issuetype != Epic'; //could be old epics which have been cloned and linked. Dont want those pls.
+        return 'issuefunction in linkedIssuesOf("project = sam AND issuetype = Epic AND ' + teamQuery + ' AND ' + fixVersionQuery + '") AND team in (Skipper, Yankee, Catta) and issuetype != Epic'; //could be old epics which have been cloned and linked. Dont want those pls.
     }
-
-    function getBudgetabbleEpicsQuery(summaryQuery, fixVersionQuery) {
-        return 'project = sam AND issuetype = Epic AND ' + summaryQuery + ' AND team in (Skipper, Yankee, Catta) AND ' + fixVersionQuery;
-    }
-
-    function getBudgetabbleSubtasksQuery(allBudgetabbleTOIssues) {
-        return 'issueFunction in subtasksOf(' + allBudgetabbleTOIssues + ')';
-    }
-
 
     var Report = {};
     Report.init = init;
