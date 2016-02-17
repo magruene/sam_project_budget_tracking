@@ -1,8 +1,9 @@
 (function (global, $) {
     "use strict";
-    var AJS = {};
-    var queue = 0;
-    AJS.$ = $;
+    if (AJS === undefined) {
+        var AJS = {};
+        AJS.$ = $;
+    }
     var loggedWorkPerTeamAndEpic;
 
 
@@ -91,7 +92,7 @@
                                 };
                                 prepareEpic(epicLink, currentTeam).then(function (epic) {
                                     loggedWorkPerTeamAndEpic[currentTeam][epicLink].epic = epic;
-                                    calculateLoggedWorkSumOnGivenIssue(epic.key, epic.key, currentTeam);
+                                    getWorklogForIssue(epic.key, epic.key, currentTeam);
                                 });
                             }
                             calculateLoggedWorkSumOnStory(issue);
@@ -138,9 +139,8 @@
     function calculateLoggedWorkSumOnStory(story) {
         var epicKey = story.fields.customfield_12150;
         var team = story.fields.customfield_14850.value;
-        calculateLoggedWorkSumOnGivenIssue(story.key, epicKey, team);
-        calculateLoggedWorkSumOnStorySubtasks(story, epicKey, team);
-
+        getWorklogForIssue(story.key, epicKey, team);
+        getLoggedWorkForSubtasks(story, epicKey, team);
         var issueEstimation = story.fields.aggregatetimeoriginalestimate / 3600;
         loggedWorkPerTeamAndEpic[team][epicKey].totalEstimate += issueEstimation;
         if (story.fields.status.name !== "R4Review" && story.fields.status.name !== "Closed") {
@@ -154,7 +154,7 @@
                 queue--;
                 if (subtasks.issues.length > 0) {
                     AJS.$.each(subtasks.issues, function (index, subtask) {
-                        calculateLoggedWorkSumOnGivenIssue(subtask.key, epicKey, team);
+                        getWorklogForIssue(subtask.key, epicKey, team);
                     });
                 }
             })
@@ -162,12 +162,6 @@
                 console.log("could not complete worklog request for: " + story.key + ". Will try again");
                 getLoggedWorkForSubtasks(story, epicKey, team); // retry
             });
-    }
-
-    function calculateLoggedWorkSumOnStorySubtasks(story, epicKey, team) {
-        waitfor(getQueue, 5, 1000, 0, "wait to get log for: " + story.key, function () {
-            getLoggedWorkForSubtasks(story, epicKey, team);
-        });
     }
 
     function getWorklogForIssue(key, epicKey, team) {
@@ -182,7 +176,7 @@
 
                 if (worklogs.worklogs.length > 0) {
                     AJS.$.each(worklogs.worklogs, function (index, worklog) {
-                        var created = new Date(worklog.created).getTime();
+                        var created = new Date(worklog.started).getTime();
                         if (created > fromTimeStamp && created < toTimestamp) {
                             sumLoggedWork += worklog.timeSpentSeconds;
                         }
@@ -196,20 +190,6 @@
                 console.log("could not complete worklog request for: " + key + ". Will try again");
                 getWorklogForIssue(key, epicKey, team); // retry
             });
-    }
-
-    function calculateLoggedWorkSumOnGivenIssue(key, epicKey, team) {
-        waitfor(getQueue, 5, 1000, 0, "wait to get log for: " + key, function () {
-            getWorklogForIssue(key, epicKey, team);
-        });
-    }
-
-    function getQueue() {
-        return queue;
-    }
-
-    function waitfor(test, expectedValue, msec, count, source, callback) {
-        callback();
     }
 
     function getBudgetabbleTOIssuesQuery(summaryQuery, teamQuery, fixVersionQuery) {
