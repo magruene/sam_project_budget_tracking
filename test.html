@@ -94,16 +94,15 @@
 <script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/underscore-min.js"></script>
 <script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/bootstrap.min.js"></script>
 <script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/big.js"></script>
-<script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/report.js"></script>
+<script src="http://rawgit.com/magruene/sam_project_budget_tracking/bb0a7e6ca10e90f5f0b285f50fb139cabd0d6c78/js/report.js"></script>
 <script>
-    $(window).load(function () {
+    AJS.$(window).load(function () {
         window.gadget = AJS.Gadget({
             baseUrl: "http://jira.swisscom.com",
             view: {
                 onResizeAdjustHeight: true,
                 template: function (args) {
                     Report.init();
-                    gadget.resize();
                 }
             }
         });

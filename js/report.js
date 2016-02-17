@@ -192,13 +192,6 @@
 
     function waitfor(test, expectedValue, msec, count, source, callback) {
         // Check if condition met. If not, re-check later (msec).
-        if (test() > expectedValue) {
-            count++;
-            setTimeout(function () {
-                waitfor(test, expectedValue, msec, count, source, callback);
-            }, msec);
-            return;
-        }
         // Condition finally met. callback() can be executed.
         console.log(source + ': ' + test + ', expected: ' + expectedValue + ', ' + count + ' loops.');
         callback();
