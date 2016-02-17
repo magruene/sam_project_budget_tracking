@@ -62,6 +62,7 @@
                         }
                     });
                 });
+                gadget.resize();
             }
         });
 
@@ -152,20 +153,20 @@
         queue++;
         AJS.$.getJSON("http://jira.swisscom.com/rest/api/2/search?fields=key&jql=parent in (" + story.key + ")")
             .success(function (subtasks) {
-            queue--;
-            if (subtasks.issues.length > 0) {
-                AJS.$.each(subtasks.issues, function (index, subtask) {
-                    calculateLoggedWorkSumOnGivenIssue(subtask.key, epicKey, team);
-                });
-            }
+                queue--;
+                if (subtasks.issues.length > 0) {
+                    AJS.$.each(subtasks.issues, function (index, subtask) {
+                        calculateLoggedWorkSumOnGivenIssue(subtask.key, epicKey, team);
+                    });
+                }
             })
             .error(function () {
                 if (tries < 3) {
                     tries++;
                     console.log("could not complete worklog request for: " + story.key + ". Will try again");
                     getWorklogForIssue(key, epicKey, team); // retry
-            }
-        });
+                }
+            });
     }
 
     function calculateLoggedWorkSumOnStorySubtasks(story, epicKey, team) {
@@ -178,33 +179,33 @@
         queue++;
         var tries = 0;
         AJS.$.getJSON("http://jira.swisscom.com/rest/api/2/issue/" + key + "/worklog")
-        .success(function (worklogs) {
-            queue--;
-            var from = AJS.$("#from").val();
-            var fromTimeStamp = new Date(from).getTime();
-            var to = AJS.$("#to").val();
-            var toTimestamp = new Date(to).getTime();
-            var sumLoggedWork = 0;
+            .success(function (worklogs) {
+                queue--;
+                var from = AJS.$("#from").val();
+                var fromTimeStamp = new Date(from).getTime();
+                var to = AJS.$("#to").val();
+                var toTimestamp = new Date(to).getTime();
+                var sumLoggedWork = 0;
 
-            if (worklogs.worklogs.length > 0) {
-                AJS.$.each(worklogs.worklogs, function (index, worklog) {
-                    var created = new Date(worklog.created).getTime();
-                    if (created > fromTimeStamp && created < toTimestamp) {
-                        sumLoggedWork += worklog.timeSpentSeconds;
-                    }
-                });
-            }
-            if (sumLoggedWork > 0) {
-                loggedWorkPerTeamAndEpic[team][epicKey].loggedWork += (sumLoggedWork / 3600);
-            }
-        })
-        .error(function () {
+                if (worklogs.worklogs.length > 0) {
+                    AJS.$.each(worklogs.worklogs, function (index, worklog) {
+                        var created = new Date(worklog.created).getTime();
+                        if (created > fromTimeStamp && created < toTimestamp) {
+                            sumLoggedWork += worklog.timeSpentSeconds;
+                        }
+                    });
+                }
+                if (sumLoggedWork > 0) {
+                    loggedWorkPerTeamAndEpic[team][epicKey].loggedWork += (sumLoggedWork / 3600);
+                }
+            })
+            .error(function () {
                 if (tries < 3) {
                     tries++;
                     console.log("could not complete worklog request for: " + key + ". Will try again");
                     getWorklogForIssue(key, epicKey, team); // retry
                 }
-        });
+            });
     }
 
     function calculateLoggedWorkSumOnGivenIssue(key, epicKey, team) {
