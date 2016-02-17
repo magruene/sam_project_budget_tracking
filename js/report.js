@@ -40,16 +40,18 @@
                 AJS.$.each(loggedWorkPerTeamAndEpic, function (team, epics) {
                     AJS.$.each(epics, function (epicKey, calculationResult) {
                         var currentEpic = calculationResult.epic;
-                        if (currentEpic.fields.fixVersions[0].name === lastFixVersion && calculationResult.loggedWork === 0) {
-                            AJS.$("#results_" + team + "#row_" + epicKey).remove();
-                        }
-                        AJS.$("#results__" + team + "#spinner_" + epicKey).hide();
-                        AJS.$("#results__" + team + "#total_" + epicKey).append("<div class='resultH'>" + calculationResult.totalEstimate + "</div>");
-                        AJS.$("#results__" + team + "#remaining_" + epicKey).append("<div class='resultH'>" + calculationResult.remainingEstimate + "</div>");
-                        if (calculationResult.loggedWork > 0) {
-                            AJS.$("#results_" + team + "#logged_" + epicKey).append("<div class='resultH'>" + calculationResult.loggedWork + "</div>");
-                        } else {
-                            AJS.$("#results_" + team + "#logged_" + epicKey).append("<div class='resultH'>0</div>");
+                        if (currentEpic) {
+                            if (currentEpic.fields.fixVersions && currentEpic.fields.fixVersions[0].name === lastFixVersion && calculationResult.loggedWork === 0) {
+                                AJS.$("#results_" + team + "#row_" + epicKey).remove();
+                            }
+                            AJS.$("#results__" + team + "#spinner_" + epicKey).hide();
+                            AJS.$("#results__" + team + "#total_" + epicKey).append("<div class='resultH'>" + calculationResult.totalEstimate + "</div>");
+                            AJS.$("#results__" + team + "#remaining_" + epicKey).append("<div class='resultH'>" + calculationResult.remainingEstimate + "</div>");
+                            if (calculationResult.loggedWork > 0) {
+                                AJS.$("#results_" + team + "#logged_" + epicKey).append("<div class='resultH'>" + calculationResult.loggedWork + "</div>");
+                            } else {
+                                AJS.$("#results_" + team + "#logged_" + epicKey).append("<div class='resultH'>0</div>");
+                            }
                         }
                     });
                 });
@@ -139,13 +141,22 @@
     }
 
     function getLoggedWorkForSubtasks(story, epicKey, team) {
+        var tries = 0;
         queue++;
-        AJS.$.getJSON("http://jira.swisscom.com/rest/api/2/search?fields=key&jql=parent in (" + story.key + ")").then(function (subtasks) {
+        AJS.$.getJSON("http://jira.swisscom.com/rest/api/2/search?fields=key&jql=parent in (" + story.key + ")")
+            .success(function (subtasks) {
             queue--;
             if (subtasks.issues.length > 0) {
                 AJS.$.each(subtasks.issues, function (index, subtask) {
                     calculateLoggedWorkSumOnGivenIssue(subtask.key, epicKey, team);
                 });
+            }
+            })
+            .error(function () {
+                if (tries < 3) {
+                    tries++;
+                    console.log("could not complete worklog request for: " + key + ". Will try again");
+                    getWorklogForIssue(key, epicKey, team); // retry
             }
         });
     }
@@ -158,6 +169,7 @@
 
     function getWorklogForIssue(key, epicKey, team) {
         queue++;
+        var tries = 0;
         AJS.$.getJSON("http://jira.swisscom.com/rest/api/2/issue/" + key + "/worklog")
         .success(function (worklogs) {
             queue--;
@@ -180,7 +192,11 @@
             }
         })
         .error(function () {
-            getWorklogForIssue(key, epicKey, team); // retry
+                if (tries < 3) {
+                    tries++;
+                    console.log("could not complete worklog request for: " + key + ". Will try again");
+                    getWorklogForIssue(key, epicKey, team); // retry
+                }
         });
     }
 
