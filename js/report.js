@@ -31,20 +31,26 @@
     function pasteEpicToUi(calculationResult, lastFixVersion, nextFixVersion, team, epicKey) {
         var currentEpic = calculationResult.epic;
         if (currentEpic !== undefined) {
-            if (shouldRemoveRow(currentEpic.fields, lastFixVersion, nextFixVersion, calculationResult)) {
-                AJS.$("#results_" + team + " #row_" + epicKey).remove();
+            var mainSelector;
+            if (isEpicWithBudget(epicKey)) {
+                mainSelector = "#results_";
             } else {
-                AJS.$("#results_" + team + " #spinner_" + epicKey).hide();
-                AJS.$("#results_" + team + " #total_" + epicKey).append("<div class='resultH'>" + calculationResult.totalEstimate + "</div>");
-                AJS.$("#results_" + team + " #remaining_" + epicKey).append("<div class='resultH'>" + calculationResult.remainingEstimate + "</div>");
+                mainSelector = "#results_noBudget_"
+            }
+            if (shouldRemoveRow(currentEpic.fields, lastFixVersion, nextFixVersion, calculationResult)) {
+                AJS.$(mainSelector + team + " #row_" + epicKey).remove();
+            } else {
+                AJS.$(mainSelector + team + " #spinner_" + epicKey).hide();
+                AJS.$(mainSelector + team + " #total_" + epicKey).append("<div class='resultH'>" + calculationResult.totalEstimate + "</div>");
+                AJS.$(mainSelector + team + " #remaining_" + epicKey).append("<div class='resultH'>" + calculationResult.remainingEstimate + "</div>");
                 if (calculationResult.loggedWork > 0) {
-                    AJS.$("#results_" + team + " #logged_" + epicKey).append("<div class='resultH'>" + calculationResult.loggedWork + "</div>");
+                    AJS.$(mainSelector + team + " #logged_" + epicKey).append("<div class='resultH'>" + calculationResult.loggedWork + "</div>");
                 } else {
-                    AJS.$("#results_" + team + " #logged_" + epicKey).append("<div class='resultH'>0</div>");
+                    AJS.$(mainSelector + team + " #logged_" + epicKey).append("<div class='resultH'>0</div>");
                 }
             }
         } else {
-            AJS.$("#results_" + team + "#row_" + epicKey).remove();
+            AJS.$(mainSelector + team + "#row_" + epicKey).remove();
         }
     }
 
@@ -125,7 +131,13 @@
             success: function (issue) {
                 var epic = issue;
                 var spinnerMarkup = '<div id="spinner_' + epic.key + '" class="spinner"><div class="rect1"></div><div class="rect2"></div><div class="rect3"></div><div class="rect4"></div><div class="rect5"></div></div>';
-                AJS.$("#results_" + team + " tbody").append('<tr id="row_' + epic.key + '"><td>' + epic.fields.summary + '</td><td id="logged_' + epic.key + '">' + spinnerMarkup + '</td><td id="total_' + epic.key + '">' + spinnerMarkup + '</td><td id="remaining_' + epic.key + '">' + spinnerMarkup + '</td></tr>');
+                var mainSelector;
+                if (isEpicWithBudget(epicKey)) {
+                    mainSelector = "#results_";
+                } else {
+                    mainSelector = "#results_noBudget_"
+                }
+                AJS.$(mainSelector + team + " tbody").append('<tr id="row_' + epic.key + '"><td>' + epic.fields.summary + '</td><td id="logged_' + epic.key + '">' + spinnerMarkup + '</td><td id="total_' + epic.key + '">' + spinnerMarkup + '</td><td id="remaining_' + epic.key + '">' + spinnerMarkup + '</td></tr>');
                 return epic;
             }
         });
