@@ -48,6 +48,10 @@
         }
     }
 
+    function isEpicWithBudget(epicLink) {
+        return epicLink.indexOf("WP-") !== -1 || epicLink.indexOf("SO-") !== -1 || epicLink.indexOf("CR-") !== -1 || epicLink.indexOf("OXO-") !== -1;
+    }
+
     function search() {
         loggedWorkPerTeamAndEpic = {
             withBudget: {"Skipper": {}, "Yankee": {}, "Catta": {}},
@@ -75,10 +79,6 @@
                 gadget.resize();
             }
         });
-
-        function isEpicWithBudget(epicLink) {
-            return epicLink.indexOf("WP-") !== -1 || epicLink.indexOf("SO-") !== -1 || epicLink.indexOf("CR-") !== -1 || epicLink.indexOf("OXO-") !== -1;
-        }
 
         AJS.$.ajax({
             url: "http://jira.swisscom.com/rest/api/2/search?maxResults=2000&fields=summary,customfield_14850,customfield_12150,aggregatetimeoriginalestimate,status&jql=" + allBudgetabbleTOIssues,
