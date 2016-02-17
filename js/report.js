@@ -23,6 +23,10 @@
         });
     }
 
+    function shouldRemoveRow(fields, lastFixVersion, calculationResult) {
+        return fields !== undefined && fields.fixVersions !== undefined && fields.fixVersions.length > 0 && fields.fixVersions[0].name === lastFixVersion && calculationResult.loggedWork === 0;
+    }
+
     function search() {
         loggedWorkPerTeamAndEpic = {"Skipper": {}, "Yankee": {}, "Catta": {}};
         var team = AJS.$("#team").val();
@@ -35,23 +39,26 @@
         var allBudgetabbleEpics = getBudgetabbleEpicsQuery(summaryQuery, fixVersionQuery);
         var allBudgetabbleSubtasks = getBudgetabbleSubtasksQuery(allBudgetabbleTOIssues);
 
-        $(document).ajaxStop(function () {
-            if (0 === $.active) {
+        AJS.$(document).ajaxStop(function () {
+            if (0 === AJS.$.active) {
                 AJS.$.each(loggedWorkPerTeamAndEpic, function (team, epics) {
                     AJS.$.each(epics, function (epicKey, calculationResult) {
                         var currentEpic = calculationResult.epic;
-                        if (currentEpic) {
-                            if (currentEpic.fields.fixVersions && currentEpic.fields.fixVersions[0].name === lastFixVersion && calculationResult.loggedWork === 0) {
+                        if (currentEpic !== undefined) {
+                            if (shouldRemoveRow(currentEpic.fields, lastFixVersion, calculationResult)) {
                                 AJS.$("#results_" + team + "#row_" + epicKey).remove();
-                            }
-                            AJS.$("#results__" + team + "#spinner_" + epicKey).hide();
-                            AJS.$("#results__" + team + "#total_" + epicKey).append("<div class='resultH'>" + calculationResult.totalEstimate + "</div>");
-                            AJS.$("#results__" + team + "#remaining_" + epicKey).append("<div class='resultH'>" + calculationResult.remainingEstimate + "</div>");
-                            if (calculationResult.loggedWork > 0) {
-                                AJS.$("#results_" + team + "#logged_" + epicKey).append("<div class='resultH'>" + calculationResult.loggedWork + "</div>");
                             } else {
-                                AJS.$("#results_" + team + "#logged_" + epicKey).append("<div class='resultH'>0</div>");
+                                AJS.$("#results__" + team + "#spinner_" + epicKey).hide();
+                                AJS.$("#results__" + team + "#total_" + epicKey).append("<div class='resultH'>" + calculationResult.totalEstimate + "</div>");
+                                AJS.$("#results__" + team + "#remaining_" + epicKey).append("<div class='resultH'>" + calculationResult.remainingEstimate + "</div>");
+                                if (calculationResult.loggedWork > 0) {
+                                    AJS.$("#results_" + team + "#logged_" + epicKey).append("<div class='resultH'>" + calculationResult.loggedWork + "</div>");
+                                } else {
+                                    AJS.$("#results_" + team + "#logged_" + epicKey).append("<div class='resultH'>0</div>");
+                                }
                             }
+                        } else {
+                            AJS.$("#results_" + team + "#row_" + epicKey).remove();
                         }
                     });
                 });
