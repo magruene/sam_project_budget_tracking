@@ -218,6 +218,8 @@
     }
 
 
-    global.init = init;
+    var Report = {};
+    Report.init = init;
+    window.Report = Report;
 
 })(window, jQuery); 

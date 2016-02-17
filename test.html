@@ -3,8 +3,9 @@
 <head>
     <title>Selfmade JIRA Tracking</title>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/selfmade_tracking.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet"
+          href="http://rawgit.com/magruene/sam_project_budget_tracking/master/css/selfmade_tracking.css">
 </head>
 <body>
 
@@ -90,14 +91,22 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
-<script src="js/underscore-min.js"></script>
-<!-- Latest compiled and minified JavaScript -->
-<script src="js/bootstrap.min.js"></script>
-<script src="js/big.js"></script>
-<script src="js/report.js"></script>
+<script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/underscore-min.js"></script>
+<script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/bootstrap.min.js"></script>
+<script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/big.js"></script>
+<script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/report.js"></script>
 <script>
-    $(function () {
-        init();
+    $(window).load(function () {
+        window.gadget = AJS.Gadget({
+            baseUrl: "http://jira.swisscom.com",
+            view: {
+                onResizeAdjustHeight: true,
+                template: function (args) {
+                    Report.init();
+                    gadget.resize();
+                }
+            }
+        });
     });
 </script>
 
