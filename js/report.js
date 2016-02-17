@@ -149,8 +149,6 @@
     }
 
     function getLoggedWorkForSubtasks(story, epicKey, team) {
-        var tries = 0;
-        queue++;
         AJS.$.getJSON("http://jira.swisscom.com/rest/api/2/search?fields=key&jql=parent in (" + story.key + ")")
             .success(function (subtasks) {
                 queue--;
@@ -161,11 +159,8 @@
                 }
             })
             .error(function () {
-                if (tries < 3) {
-                    tries++;
-                    console.log("could not complete worklog request for: " + story.key + ". Will try again");
-                    getWorklogForIssue(key, epicKey, team); // retry
-                }
+                console.log("could not complete worklog request for: " + story.key + ". Will try again");
+                getLoggedWorkForSubtasks(story, epicKey, team); // retry
             });
     }
 
@@ -176,8 +171,6 @@
     }
 
     function getWorklogForIssue(key, epicKey, team) {
-        queue++;
-        var tries = 0;
         AJS.$.getJSON("http://jira.swisscom.com/rest/api/2/issue/" + key + "/worklog")
             .success(function (worklogs) {
                 queue--;
@@ -200,11 +193,8 @@
                 }
             })
             .error(function () {
-                if (tries < 3) {
-                    tries++;
-                    console.log("could not complete worklog request for: " + key + ". Will try again");
-                    getWorklogForIssue(key, epicKey, team); // retry
-                }
+                console.log("could not complete worklog request for: " + key + ". Will try again");
+                getWorklogForIssue(key, epicKey, team); // retry
             });
     }
 
