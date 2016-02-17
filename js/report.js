@@ -162,7 +162,7 @@
             .error(function () {
                 if (tries < 3) {
                     tries++;
-                    console.log("could not complete worklog request for: " + key + ". Will try again");
+                    console.log("could not complete worklog request for: " + story.key + ". Will try again");
                     getWorklogForIssue(key, epicKey, team); // retry
             }
         });
