@@ -158,7 +158,8 @@
 
     function getWorklogForIssue(key, epicKey, team) {
         queue++;
-        AJS.$.getJSON("http://jira.swisscom.com/rest/api/2/issue/" + key + "/worklog").then(function (worklogs) {
+        AJS.$.getJSON("http://jira.swisscom.com/rest/api/2/issue/" + key + "/worklog")
+        .success(function (worklogs) {
             queue--;
             var from = AJS.$("#from").val();
             var fromTimeStamp = new Date(from).getTime();
@@ -177,6 +178,9 @@
             if (sumLoggedWork > 0) {
                 loggedWorkPerTeamAndEpic[team][epicKey].loggedWork += (sumLoggedWork / 3600);
             }
+        })
+        .error(function () {
+            getWorklogForIssue(key, epicKey, team); // retry
         });
     }
 
@@ -191,9 +195,6 @@
     }
 
     function waitfor(test, expectedValue, msec, count, source, callback) {
-        // Check if condition met. If not, re-check later (msec).
-        // Condition finally met. callback() can be executed.
-        console.log(source + ': ' + test + ', expected: ' + expectedValue + ', ' + count + ' loops.');
         callback();
     }
 
