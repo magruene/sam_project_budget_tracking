@@ -46,15 +46,15 @@
                         var currentEpic = calculationResult.epic;
                         if (currentEpic !== undefined) {
                             if (shouldRemoveRow(currentEpic.fields, lastFixVersion, calculationResult)) {
-                                AJS.$("#results_" + team + "#row_" + epicKey).remove();
+                                AJS.$("#results_" + team + " #row_" + epicKey).remove();
                             } else {
-                                AJS.$("#results__" + team + "#spinner_" + epicKey).hide();
-                                AJS.$("#results__" + team + "#total_" + epicKey).append("<div class='resultH'>" + calculationResult.totalEstimate + "</div>");
-                                AJS.$("#results__" + team + "#remaining_" + epicKey).append("<div class='resultH'>" + calculationResult.remainingEstimate + "</div>");
+                                AJS.$("#results_" + team + " #spinner_" + epicKey).hide();
+                                AJS.$("#results_" + team + " #total_" + epicKey).append("<div class='resultH'>" + calculationResult.totalEstimate + "</div>");
+                                AJS.$("#results_" + team + " #remaining_" + epicKey).append("<div class='resultH'>" + calculationResult.remainingEstimate + "</div>");
                                 if (calculationResult.loggedWork > 0) {
-                                    AJS.$("#results_" + team + "#logged_" + epicKey).append("<div class='resultH'>" + calculationResult.loggedWork + "</div>");
+                                    AJS.$("#results_" + team + " #logged_" + epicKey).append("<div class='resultH'>" + calculationResult.loggedWork + "</div>");
                                 } else {
-                                    AJS.$("#results_" + team + "#logged_" + epicKey).append("<div class='resultH'>0</div>");
+                                    AJS.$("#results_" + team + " #logged_" + epicKey).append("<div class='resultH'>0</div>");
                                 }
                             }
                         } else {
