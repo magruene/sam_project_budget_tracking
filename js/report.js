@@ -79,7 +79,7 @@
                         pasteEpicToUi(calculationResult, lastFixVersion, nextFixVersion, team, epicKey);
                     });
                 });
-                //gadget.resize();
+                gadget.resize();
             }
         });
 

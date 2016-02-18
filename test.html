@@ -63,20 +63,20 @@
 <script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/underscore-min.js"></script>
 <script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/bootstrap.min.js"></script>
 <script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/big.js"></script>
-<!--<script src="http://rawgit.com/magruene/sam_project_budget_tracking/a868dd2afa1a50d5dd9e4d60a28f1babd6232296/js/report.js"></script>-->
-<script src="js/report.js"></script>
+<script src="http://rawgit.com/magruene/sam_project_budget_tracking/36e7d67b076610081dfd12fa9864deb5c46c02fa/js/report.js"></script>
+<!--<script src="js/report.js"></script>-->
 
 <script>
-    $(window).load(function () {
-//        window.gadget = AJS.Gadget({
-//            baseUrl: "http://jira.swisscom.com",
-//            view: {
-//                onResizeAdjustHeight: true,
-//                template: function (args) {
+    AJS.$(window).load(function () {
+        window.gadget = AJS.Gadget({
+            baseUrl: "http://jira.swisscom.com",
+            view: {
+                onResizeAdjustHeight: true,
+                template: function (args) {
                     Report.init();
-//                }
-//            }
-//        });
+                }
+            }
+        });
     });
 </script>
 
