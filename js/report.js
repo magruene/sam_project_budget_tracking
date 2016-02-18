@@ -6,6 +6,8 @@
     }
     var loggedWorkPerTeamAndEpic;
 
+    var tableMarkup = '<div class="row-fluid"> <h3>{{team}}</h3> <h4>Projects with Budget</h4> <table id="results_{{team}}" class="table table-striped"> <thead> <tr> <th width="60%"></th> <th width="10%"></th> <th width="10%"></th> <th width="20%"></th> </tr> </thead> <tbody> </tbody> </table> <h4>Projects without Budget</h4> <table id="results_noBudget_{{team}}" class="table table-striped"> <thead> <tr> <th width="60%"></th> <th width="10%"></th> <th width="10%"></th> <th width="20%"></th> </tr> </thead> <tbody> </tbody> </table> </div>';
+
     function init() {
         AJS.$.ajax({
             url: "http://jira.swisscom.com/rest/api/2/project/SAM/versions",
@@ -32,7 +34,7 @@
         var currentEpic = calculationResult.epic;
         if (currentEpic !== undefined) {
             var mainSelector;
-            if (isEpicWithBudget(epicKey)) {
+            if (calculationResult.withBudget) {
                 mainSelector = "#results_";
             } else {
                 mainSelector = "#results_noBudget_"
@@ -41,10 +43,10 @@
                 AJS.$(mainSelector + team + " #row_" + epicKey).remove();
             } else {
                 AJS.$(mainSelector + team + " #spinner_" + epicKey).hide();
-                AJS.$(mainSelector + team + " #total_" + epicKey).append("<div class='resultH'>" + calculationResult.totalEstimate + "</div>");
-                AJS.$(mainSelector + team + " #remaining_" + epicKey).append("<div class='resultH'>" + calculationResult.remainingEstimate + "</div>");
+                AJS.$(mainSelector + team + " #total_" + epicKey).append("<div class='resultH'>" + Math.round(calculationResult.totalEstimate * 100) / 100 + "</div>");
+                AJS.$(mainSelector + team + " #remaining_" + epicKey).append("<div class='resultH'>" + Math.round(calculationResult.remainingEstimate * 100) / 100 + "</div>");
                 if (calculationResult.loggedWork > 0) {
-                    AJS.$(mainSelector + team + " #logged_" + epicKey).append("<div class='resultH'>" + calculationResult.loggedWork + "</div>");
+                    AJS.$(mainSelector + team + " #logged_" + epicKey).append("<div class='resultH'>" + Math.round(calculationResult.loggedWork * 100) / 100 + "</div>");
                 } else {
                     AJS.$(mainSelector + team + " #logged_" + epicKey).append("<div class='resultH'>0</div>");
                 }
@@ -55,13 +57,12 @@
     }
 
     function isEpicWithBudget(epicLink) {
-        return epicLink.indexOf("WP-") !== -1 || epicLink.indexOf("SO-") !== -1 || epicLink.indexOf("CR-") !== -1 || epicLink.indexOf("OXO-") !== -1;
+        return epicLink.indexOf("WP-") !== -1 || epicLink.indexOf("SO-") !== -1 || epicLink.indexOf("CR-") !== -1 || epicLink.indexOf("OXO - ") !== -1;
     }
 
     function search() {
         loggedWorkPerTeamAndEpic = {
-            "withBudget": {"Skipper": {}, "Yankee": {}, "Catta": {}},
-            "withoutBudget": {"Skipper": {}, "Yankee": {}, "Catta": {}}
+            "Skipper": {}, "Yankee": {}, "Catta": {}
         };
         var team = AJS.$("#team").val();
         var fixVersion = AJS.$("#versionChooserMain").val();
@@ -73,21 +74,17 @@
 
         AJS.$(document).ajaxStop(function () {
             if (0 === AJS.$.active) {
-                var teams = ["Skipper", "Yankee", "Catta"];
-                AJS.$.each(teams, function (team) {
-                    AJS.$.each(loggedWorkPerTeamAndEpic["withBudget"][team], function (epicKey, calculationResult) {
-                        pasteEpicToUi(calculationResult, lastFixVersion, nextFixVersion, team, epicKey);
-                    });
-                    AJS.$.each(loggedWorkPerTeamAndEpic["withoutBudget"][team], function (epicKey, calculationResult) {
+                AJS.$.each(loggedWorkPerTeamAndEpic, function (team) {
+                    AJS.$.each(loggedWorkPerTeamAndEpic[team], function (epicKey, calculationResult) {
                         pasteEpicToUi(calculationResult, lastFixVersion, nextFixVersion, team, epicKey);
                     });
                 });
-                gadget.resize();
+                //gadget.resize();
             }
         });
 
         AJS.$.ajax({
-            url: "http://jira.swisscom.com/rest/api/2/search?maxResults=2000&fields=summary,customfield_14850,customfield_12150,aggregatetimeoriginalestimate,status&jql=" + allBudgetabbleTOIssues,
+            url: "http://jira.swisscom.com/rest/api/2/search?maxResults=2000&fields=summary,customfield_14850,customfield_12150,aggregatetimeoriginalestimate,status,issuetype&jql=" + allBudgetabbleTOIssues + " or (project = sam and issuetype=Epic and team in (Skipper, Yankee, Catta) and " + fixVersionQuery + ")",
             dataType: "json",
             success: function (issues) {
                 var actualIssues = issues.issues;
@@ -96,32 +93,41 @@
                         return issue.fields.customfield_14850.value; //Team
                     });
                     AJS.$.each(_.keys(groupedIssuesByTeam), function (index, currentTeam) {
+                        $("#" + currentTeam + "_container").append(tableMarkup.replace(new RegExp("{{team}}", 'g'), currentTeam));
                         var issueGroup = groupedIssuesByTeam[currentTeam];
                         AJS.$.each(issueGroup, function (index, issue) {
-                            var epicKey = issue.fields.customfield_12150;
+                            var epicKey = getEpicKey(issue);
                             if (epicKey === null) {
                                 console.log("Issue ", issue, " has no epic link")
                             }
 
-                            var store = getStore(epicKey);
-                            if (store[currentTeam][epicKey] === undefined) {
-                                store[currentTeam][epicKey] = {
+                            if (loggedWorkPerTeamAndEpic[currentTeam][epicKey] === undefined) {
+                                loggedWorkPerTeamAndEpic[currentTeam][epicKey] = {
                                     "loggedWork": 0,
                                     "totalEstimate": 0,
                                     "remainingEstimate": 0
                                 };
                                 prepareEpic(epicKey, currentTeam).then(function (epic) {
-                                    store[currentTeam][epicKey].epic = epic;
+                                    loggedWorkPerTeamAndEpic[currentTeam][epicKey].epic = epic;
                                     getWorklogForIssue(epic.key, epic.key, currentTeam);
                                 });
                             }
-                            calculateLoggedWorkSumOnStory(issue);
-
+                            if (issue.fields.issuetype.name !== "Epic") {
+                                calculateLoggedWorkSumOnStory(issue);
+                            }
                         });
                     });
                 }
             }
         });
+    }
+
+    function getEpicKey(issue) {
+        if (issue.fields.issuetype.name === "Epic") {
+            return issue.key;
+        } else {
+            return issue.fields.customfield_12150;
+        }
     }
 
     function prepareEpic(epicKey, team) {
@@ -130,9 +136,10 @@
             dataType: "json",
             success: function (issue) {
                 var epic = issue;
+                loggedWorkPerTeamAndEpic[team][epicKey].withBudget = isEpicWithBudget(epic.fields.summary);
                 var spinnerMarkup = '<div id="spinner_' + epic.key + '" class="spinner"><div class="rect1"></div><div class="rect2"></div><div class="rect3"></div><div class="rect4"></div><div class="rect5"></div></div>';
                 var mainSelector;
-                if (isEpicWithBudget(epicKey)) {
+                if (loggedWorkPerTeamAndEpic[team][epicKey].withBudget) {
                     mainSelector = "#results_";
                 } else {
                     mainSelector = "#results_noBudget_"
@@ -146,13 +153,12 @@
     function calculateLoggedWorkSumOnStory(story) {
         var epicKey = story.fields.customfield_12150;
         var team = story.fields.customfield_14850.value;
-        var store = getStore(epicKey);
         getWorklogForIssue(story.key, epicKey, team);
         getLoggedWorkForSubtasks(story, epicKey, team);
-        var issueEstimation = story.fields.aggregatetimeoriginalestimate / 3600;
-        store[team][epicKey].totalEstimate += issueEstimation;
+        var issueEstimation = story.fields.aggregatetimeoriginalestimate / 28800;
+        loggedWorkPerTeamAndEpic[team][epicKey].totalEstimate += issueEstimation;
         if (story.fields.status.name !== "R4Review" && story.fields.status.name !== "Closed") {
-            store[team][epicKey].remainingEstimate += issueEstimation;
+            loggedWorkPerTeamAndEpic[team][epicKey].remainingEstimate += issueEstimation;
         }
     }
 
@@ -169,16 +175,6 @@
                 console.log("could not complete worklog request for: " + story.key + ". Will try again");
                 getLoggedWorkForSubtasks(story, epicKey, team); // retry
             });
-    }
-
-    function getStore(epicKey) {
-        var store;
-        if (isEpicWithBudget(epicKey)) {
-            store = loggedWorkPerTeamAndEpic.withBudget;
-        } else {
-            store = loggedWorkPerTeamAndEpic.withoutBudget;
-        }
-        return store;
     }
 
     function getWorklogForIssue(key, epicKey, team) {
@@ -199,7 +195,7 @@
                     });
                 }
                 if (sumLoggedWork > 0) {
-                    getStore(epicKey)[team][epicKey].loggedWork += (sumLoggedWork / 3600);
+                    loggedWorkPerTeamAndEpic[team][epicKey].loggedWork += (sumLoggedWork / 28800);
                 }
             })
             .error(function () {

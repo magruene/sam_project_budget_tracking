@@ -8,15 +8,6 @@
           href="http://rawgit.com/magruene/sam_project_budget_tracking/master/css/selfmade_tracking.css">
 </head>
 <body>
-
-<div class="jumbotron">
-    <div class="container">
-        <h1>Selfmade JIRA Tracking</h1>
-
-        <p>This is a draft for timeframe based tracking on epics.</p>
-    </div>
-</div>
-
 <div class="row-fluid">
     <div class="col-lg-3 well">
         <form class="form-horizontal">
@@ -51,87 +42,20 @@
             </div>
         </form>
     </div>
-    <div class="col-lg-9">
-        <div class="row-fluid">
-            <table id="results_Skipper" class="table table-striped">
-                <thead>
-                <tr>
-                    <th width="70%">Issue Name</th>
-                    <th width="10%">logged</th>
-                    <th width="10%">totalEstimate</th>
-                    <th width="10%">remainingEstimate</th>
-                </tr>
-                </thead>
-                <tbody>
-
-                </tbody>
-            </table>
-            <table id="results_noBudget_Skipper" class="table table-striped">
-                <thead>
-                <tr>
-                    <th width="70%">Issue Name</th>
-                    <th width="10%">logged</th>
-                    <th width="10%">totalEstimate</th>
-                    <th width="10%">remainingEstimate</th>
-                </tr>
-                </thead>
-                <tbody>
-
-                </tbody>
-            </table>
-            <table id="results_Yankee" class="table table-striped">
-                <thead>
-                <tr>
-                    <th width="70%">Issue Name</th>
-                    <th width="10%">logged</th>
-                    <th width="10%">totalEstimate</th>
-                    <th width="10%">remainingEstimate</th>
-                </tr>
-                </thead>
-                <tbody>
-
-                </tbody>
-            </table>
-            <table id="results_noBudget_Yankee" class="table table-striped">
-                <thead>
-                <tr>
-                    <th width="70%">Issue Name</th>
-                    <th width="10%">logged</th>
-                    <th width="10%">totalEstimate</th>
-                    <th width="10%">remainingEstimate</th>
-                </tr>
-                </thead>
-                <tbody>
-
-                </tbody>
-            </table>
-            <table id="results_Catta" class="table table-striped">
-                <thead>
-                <tr>
-                    <th width="70%">Issue Name</th>
-                    <th width="10%">logged</th>
-                    <th width="10%">totalEstimate</th>
-                    <th width="10%">remainingEstimate</th>
-                </tr>
-                </thead>
-                <tbody>
-
-                </tbody>
-            </table>
-            <table id="results_noBudget_Catta" class="table table-striped">
-                <thead>
-                <tr>
-                    <th width="70%">Issue Name</th>
-                    <th width="10%">logged</th>
-                    <th width="10%">totalEstimate</th>
-                    <th width="10%">remainingEstimate</th>
-                </tr>
-                </thead>
-                <tbody>
-
-                </tbody>
-            </table>
-        </div>
+    <div id="container" class="col-lg-9">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th width="60%">Issue Name</th>
+                <th width="10%">logged (PT)</th>
+                <th width="10%">Total estimate (MS4 PT)</th>
+                <th width="20%">Remaining estimate (MS4 PT)</th>
+            </tr>
+            </thead>
+        </table>
+        <div id="Skipper_container"></div>
+        <div id="Yankee_container"></div>
+        <div id="Catta_container"></div>
     </div>
 </div>
 
@@ -139,18 +63,20 @@
 <script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/underscore-min.js"></script>
 <script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/bootstrap.min.js"></script>
 <script src="http://rawgit.com/magruene/sam_project_budget_tracking/master/js/big.js"></script>
-<script src="http://rawgit.com/magruene/sam_project_budget_tracking/ae2310bdbd24124e7fb276586e159319997eccfe/js/report.js"></script>
+<!--<script src="http://rawgit.com/magruene/sam_project_budget_tracking/a868dd2afa1a50d5dd9e4d60a28f1babd6232296/js/report.js"></script>-->
+<script src="js/report.js"></script>
+
 <script>
-    AJS.$(window).load(function () {
-        window.gadget = AJS.Gadget({
-            baseUrl: "http://jira.swisscom.com",
-            view: {
-                onResizeAdjustHeight: true,
-                template: function (args) {
+    $(window).load(function () {
+//        window.gadget = AJS.Gadget({
+//            baseUrl: "http://jira.swisscom.com",
+//            view: {
+//                onResizeAdjustHeight: true,
+//                template: function (args) {
                     Report.init();
-                }
-            }
-        });
+//                }
+//            }
+//        });
     });
 </script>
 
