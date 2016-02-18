@@ -27,7 +27,7 @@
     }
 
     function shouldRemoveRow(fields, lastFixVersion, nextFixVersion, calculationResult) {
-        return fields !== undefined && fields.fixVersions !== undefined && fields.fixVersions.length > 0 && fields.fixVersions[0].name === lastFixVersion && fields.fixVersions[0].name === nextFixVersion && calculationResult.loggedWork === 0;
+        return fields !== undefined && fields.fixVersions !== undefined && fields.fixVersions.length > 0 && (fields.fixVersions[0].name === lastFixVersion || fields.fixVersions[0].name === nextFixVersion) && calculationResult.loggedWork === 0;
     }
 
     function pasteEpicToUi(calculationResult, lastFixVersion, nextFixVersion, team, epicKey) {
