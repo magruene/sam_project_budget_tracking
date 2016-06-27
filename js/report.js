@@ -1,27 +1,25 @@
-(function (global, $) {
+(function (global) {
     "use strict";
-    if (AJS === undefined) {
-        var AJS = {};
-        AJS.$ = $;
-    }
-    var loggedWorkPerTeamAndEpic;
 
+    var loggedWorkPerTeamAndEpic;
+    var gadgetId;
     var tableMarkup = '<div class="row-fluid"> <h3>{{team}}</h3> <h4>Projects with Budget</h4> <table id="results_{{team}}" class="table table-striped"> <thead> <tr> <th width="60%"></th> <th width="10%"></th> <th width="10%"></th> <th width="20%"></th> </tr> </thead> <tbody> </tbody> </table> <h4>Projects without Budget</h4> <table id="results_noBudget_{{team}}" class="table table-striped"> <thead> <tr> <th width="60%"></th> <th width="10%"></th> <th width="10%"></th> <th width="20%"></th> </tr> </thead> <tbody> </tbody> </table> </div>';
 
-    function init() {
-        AJS.$.ajax({
+    function init(givenGadgetId) {
+        gadgetId = givenGadgetId;
+        $.ajax({
             url: "http://jira.swisscom.com/rest/api/2/project/SAM/versions",
             contentType: 'application/json',
             dataType: "json",
             success: function (data) {
-                AJS.$.each(data, function (index, version) {
+                $.each(data, function (index, version) {
                     if (!version.released) {
-                        AJS.$("#versionChooserMain").append("<option value='" + version.name + "'>" + version.name + "</option>");
-                        AJS.$("#versionChooserLast").append("<option value='" + version.name + "'>" + version.name + "</option>");
-                        AJS.$("#versionChooserNext").append("<option value='" + version.name + "'>" + version.name + "</option>");
+                        $("#versionChooserMain").append("<option value='" + version.name + "'>" + version.name + "</option>");
+                        $("#versionChooserLast").append("<option value='" + version.name + "'>" + version.name + "</option>");
+                        $("#versionChooserNext").append("<option value='" + version.name + "'>" + version.name + "</option>");
                     }
                 });
-                AJS.$("button").click(search);
+                $("button").click(search);
             }
         });
     }
@@ -40,19 +38,19 @@
                 mainSelector = "#results_noBudget_"
             }
             if (shouldRemoveRow(currentEpic.fields, lastFixVersion, nextFixVersion, calculationResult)) {
-                AJS.$(mainSelector + team + " #row_" + epicKey).remove();
+                $(mainSelector + team + " #row_" + epicKey).remove();
             } else {
-                AJS.$(mainSelector + team + " #spinner_" + epicKey).hide();
-                AJS.$(mainSelector + team + " #total_" + epicKey).append("<div class='resultH'>" + Math.round(calculationResult.totalEstimate * 100) / 100 + "</div>");
-                AJS.$(mainSelector + team + " #remaining_" + epicKey).append("<div class='resultH'>" + Math.round(calculationResult.remainingEstimate * 100) / 100 + "</div>");
+                $(mainSelector + team + " #spinner_" + epicKey).hide();
+                $(mainSelector + team + " #total_" + epicKey).append("<div class='resultH'>" + Math.round(calculationResult.totalEstimate * 100) / 100 + "</div>");
+                $(mainSelector + team + " #remaining_" + epicKey).append("<div class='resultH'>" + Math.round(calculationResult.remainingEstimate * 100) / 100 + "</div>");
                 if (calculationResult.loggedWork > 0) {
-                    AJS.$(mainSelector + team + " #logged_" + epicKey).append("<div class='resultH'>" + Math.round(calculationResult.loggedWork * 100) / 100 + "</div>");
+                    $(mainSelector + team + " #logged_" + epicKey).append("<div class='resultH'>" + Math.round(calculationResult.loggedWork * 100) / 100 + "</div>");
                 } else {
-                    AJS.$(mainSelector + team + " #logged_" + epicKey).append("<div class='resultH'>0</div>");
+                    $(mainSelector + team + " #logged_" + epicKey).append("<div class='resultH'>0</div>");
                 }
             }
         } else {
-            AJS.$(mainSelector + team + "#row_" + epicKey).remove();
+            $(mainSelector + team + "#row_" + epicKey).remove();
         }
     }
 
@@ -64,26 +62,29 @@
         loggedWorkPerTeamAndEpic = {
             "Skipper": {}, "Yankee": {}, "Catta": {}
         };
-        var team = AJS.$("#team").val();
-        var fixVersion = AJS.$("#versionChooserMain").val();
-        var lastFixVersion = AJS.$("#versionChooserLast").val();
-        var nextFixVersion = AJS.$("#versionChooserNext").val();
+        var team = $("#team").val();
+        var fixVersion = $("#versionChooserMain").val();
+        var lastFixVersion = $("#versionChooserLast").val();
+        var nextFixVersion = $("#versionChooserNext").val();
         var teamQuery = "team in ('Skipper', 'Yankee', 'Catta', 'Private', 'Rico', 'Kowalski')";
         var fixVersionQuery = "(fixVersion in('" + fixVersion + "', '" + lastFixVersion + "', '" + nextFixVersion + "'))";
         var allBudgetabbleTOIssues = getBudgetabbleTOIssuesQuery(teamQuery, fixVersionQuery);
 
-        AJS.$(document).ajaxStop(function () {
-            if (0 === AJS.$.active) {
-                AJS.$.each(loggedWorkPerTeamAndEpic, function (team) {
-                    AJS.$.each(loggedWorkPerTeamAndEpic[team], function (epicKey, calculationResult) {
+        .$(document).ajaxStop(function () {
+            if (0 === $.active) {
+                $.each(loggedWorkPerTeamAndEpic, function (team) {
+                    $.each(loggedWorkPerTeamAndEpic[team], function (epicKey, calculationResult) {
                         pasteEpicToUi(calculationResult, lastFixVersion, nextFixVersion, team, epicKey);
                     });
                 });
-                gadget.resize();
+                AJS.$("#" + gadgetId + " iframe").css("height", $("html").css("height")); 
+                AJS.$.each(parent.AG.DashboardManager.activeLayout.getGadgets(), function(index, gadget) { 
+                    gadget.resize();
+                });
             }
         });
 
-        AJS.$.ajax({
+        $.ajax({
             url: "http://jira.swisscom.com/rest/api/2/search?maxResults=2000&fields=summary,customfield_14850,customfield_12150,aggregatetimeoriginalestimate,status,issuetype&jql=" + allBudgetabbleTOIssues + " or (project = sam and issuetype=Epic and team in (Skipper, Yankee, Catta) and " + fixVersionQuery + ")",
             dataType: "json",
             success: function (issues) {
@@ -92,10 +93,10 @@
                     var groupedIssuesByTeam = _.groupBy(actualIssues, function (issue) {
                         return issue.fields.customfield_14850.value; //Team
                     });
-                    AJS.$.each(_.keys(groupedIssuesByTeam), function (index, currentTeam) {
+                    $.each(_.keys(groupedIssuesByTeam), function (index, currentTeam) {
                         $("#" + currentTeam + "_container").append(tableMarkup.replace(new RegExp("{{team}}", 'g'), currentTeam));
                         var issueGroup = groupedIssuesByTeam[currentTeam];
-                        AJS.$.each(issueGroup, function (index, issue) {
+                        $.each(issueGroup, function (index, issue) {
                             var epicKey = getEpicKey(issue);
                             if (epicKey === null) {
                                 console.log("Issue ", issue, " has no epic link")
@@ -131,7 +132,7 @@
     }
 
     function prepareEpic(epicKey, team) {
-        return AJS.$.ajax({
+        return $.ajax({
             url: "http://jira.swisscom.com/rest/api/2/issue/" + epicKey + "?fields=key,summary,fixVersions",
             dataType: "json",
             success: function (issue) {
@@ -144,7 +145,7 @@
                 } else {
                     mainSelector = "#results_noBudget_"
                 }
-                AJS.$(mainSelector + team + " tbody").append('<tr id="row_' + epic.key + '"><td>' + epic.fields.summary + '</td><td id="logged_' + epic.key + '">' + spinnerMarkup + '</td><td id="total_' + epic.key + '">' + spinnerMarkup + '</td><td id="remaining_' + epic.key + '">' + spinnerMarkup + '</td></tr>');
+                $(mainSelector + team + " tbody").append('<tr id="row_' + epic.key + '"><td>' + epic.fields.summary + '</td><td id="logged_' + epic.key + '">' + spinnerMarkup + '</td><td id="total_' + epic.key + '">' + spinnerMarkup + '</td><td id="remaining_' + epic.key + '">' + spinnerMarkup + '</td></tr>');
                 return epic;
             }
         });
@@ -163,10 +164,10 @@
     }
 
     function getLoggedWorkForSubtasks(story, epicKey, team) {
-        AJS.$.getJSON("http://jira.swisscom.com/rest/api/2/search?fields=key&jql=parent in (" + story.key + ")")
+        $.getJSON("http://jira.swisscom.com/rest/api/2/search?fields=key&jql=parent in (" + story.key + ")")
             .success(function (subtasks) {
                 if (subtasks.issues.length > 0) {
-                    AJS.$.each(subtasks.issues, function (index, subtask) {
+                    $.each(subtasks.issues, function (index, subtask) {
                         getWorklogForIssue(subtask.key, epicKey, team);
                     });
                 }
@@ -178,16 +179,16 @@
     }
 
     function getWorklogForIssue(key, epicKey, team) {
-        AJS.$.getJSON("http://jira.swisscom.com/rest/api/2/issue/" + key + "/worklog")
+        $.getJSON("http://jira.swisscom.com/rest/api/2/issue/" + key + "/worklog")
             .success(function (worklogs) {
-                var from = AJS.$("#from").val();
+                var from = $("#from").val();
                 var fromTimeStamp = new Date(from).getTime();
-                var to = AJS.$("#to").val();
+                var to = $("#to").val();
                 var toTimestamp = new Date(to).getTime();
                 var sumLoggedWork = 0;
 
                 if (worklogs.worklogs.length > 0) {
-                    AJS.$.each(worklogs.worklogs, function (index, worklog) {
+                    $.each(worklogs.worklogs, function (index, worklog) {
                         var created = new Date(worklog.started).getTime();
                         if (created > fromTimeStamp && created < toTimestamp) {
                             sumLoggedWork += worklog.timeSpentSeconds;
@@ -213,4 +214,4 @@
     Report.init = init;
     window.Report = Report;
 
-})(window, jQuery); 
+})(window); 
