@@ -70,7 +70,7 @@
         var fixVersionQuery = "(fixVersion in('" + fixVersion + "', '" + lastFixVersion + "', '" + nextFixVersion + "'))";
         var allBudgetabbleTOIssues = getBudgetabbleTOIssuesQuery(teamQuery, fixVersionQuery);
 
-        .$(document).ajaxStop(function () {
+        $(document).ajaxStop(function () {
             if (0 === $.active) {
                 $.each(loggedWorkPerTeamAndEpic, function (team) {
                     $.each(loggedWorkPerTeamAndEpic[team], function (epicKey, calculationResult) {
