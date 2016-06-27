@@ -20,6 +20,10 @@
                     }
                 });
                 $("button").click(search);
+                AJS.$("#" + gadgetId + " iframe").css("height", $("html").css("height")); 
+                AJS.$.each(parent.AG.DashboardManager.activeLayout.getGadgets(), function(index, gadget) { 
+                    gadget.resize();
+                });
             }
         });
     }
