@@ -59,7 +59,7 @@
     }
 
     function isEpicWithBudget(epicLink) {
-        return epicLink.indexOf("WP-") !== -1 || epicLink.indexOf("SO-") !== -1 || epicLink.indexOf("CR-") !== -1 || epicLink.indexOf("OXO - ") !== -1;
+        return epicLink.indexOf("Feasibility") !== -1 || epicLink.indexOf("CCBO-") !== -1 || epicLink.indexOf("WP-") !== -1 || epicLink.indexOf("SO-") !== -1 || epicLink.indexOf("CR-") !== -1 || epicLink.indexOf("OXO - ") !== -1;
     }
 
     function search() {
